@@ -1,47 +1,31 @@
-.MODEL SMALL
-.STACK 100H
+section .data
+    message db "The 5S system is a method for organizing and maintaining a clean, efficient workplace.", 10
+            db "It includes five steps:", 10
+            db "1. Sort (remove unnecessary items)", 10
+            db "2. Set in Order (arrange needed items properly)", 10
+            db "3. Shine (clean regularly)", 10
+            db "4. Standardize (create consistent rules)", 10
+            db "5. Sustain (maintain discipline)", 10, 10
+            db "Objectives:", 10
+            db "- Improve organization", 10
+            db "- Increase productivity", 10
+            db "- Enhance safety", 10
+            db "- Reduce waste", 10
+            db "- Promote responsibility in the workplace", 10
+    msg_len equ $ - message
 
-.DATA
-msg1 DB "Step 1: Sort (Remove unnecessary items)$"
-msg2 DB 0DH,0AH,"Step 2: Set in Order (Arrange properly)$"
-msg3 DB 0DH,0AH,"Step 3: Shine (Clean the area)$"
-msg4 DB 0DH,0AH,"Step 4: Standardize (Follow rules)$"
-msg5 DB 0DH,0AH,"Step 5: Sustain (Maintain discipline)$"
+section .text
+    global _start
 
-.CODE
-MAIN PROC
+_start:
+    ; write(stdout, message, msg_len)
+    mov rax, 1          ; syscall: write
+    mov rdi, 1          ; stdout
+    mov rsi, message    ; pointer
+    mov rdx, msg_len    ; length
+    syscall
 
-    MOV AX, @DATA
-    MOV DS, AX
-
-    ; Display Step 1
-    LEA DX, msg1
-    MOV AH, 09H
-    INT 21H
-
-    ; Display Step 2
-    LEA DX, msg2
-    MOV AH, 09H
-    INT 21H
-
-    ; Display Step 3
-    LEA DX, msg3
-    MOV AH, 09H
-    INT 21H
-
-    ; Display Step 4
-    LEA DX, msg4
-    MOV AH, 09H
-    INT 21H
-
-    ; Display Step 5
-    LEA DX, msg5
-    MOV AH, 09H
-    INT 21H
-
-    ; Exit program
-    MOV AH, 4CH
-    INT 21H
-
-MAIN ENDP
-END MAIN
+    ; exit(0)
+    mov rax, 60         ; syscall: exit
+    xor rdi, rdi        ; status 0
+    syscall
