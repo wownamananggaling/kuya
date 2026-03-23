@@ -1,11 +1,4 @@
 section .data
-; ===== UI =====
-title db 10,"==== 5S QUIZ GAME ====",10
-title_len equ $ - title
-
-line db "----------------------",10
-line_len equ $ - line
-
 ; ===== QUESTIONS =====
 q1 db "Sort removes unnecessary items?",10,"1.Yes 2.No: "
 q1_len equ $ - q1
@@ -35,6 +28,9 @@ score_len equ $ - score_txt
 lives_txt db " Lives: "
 lives_len equ $ - lives_txt
 
+title db 10,"==== 5S QUIZ GAME ====",10
+title_len equ $ - title
+
 section .bss
 input resb 2
 score resb 1
@@ -47,19 +43,16 @@ _start:
     mov byte [score], 0
     mov byte [lives], 3
 
-    ; show title
     mov rsi, title
     mov rdx, title_len
     call print
 
-game_start:
+game_loop:
     cmp byte [lives], 0
     je game_over
 
-    ; show status
     call show_status
 
-    ; ask questions
     call ask_q1
     call check_life
     call ask_q2
@@ -94,17 +87,20 @@ ask_q3:
     call check
     ret
 
-; ===== CHECK ANSWER =====
+; ===== CORE =====
+ask:
+    call print
+    call input_read
+    ret
+
 check:
     je right
-
 wrong_ans:
     dec byte [lives]
     mov rsi, wrong
     mov rdx, wrong_len
     call print
     ret
-
 right:
     inc byte [score]
     mov rsi, correct
@@ -117,48 +113,27 @@ check_life:
     je game_over
     ret
 
-; ===== STATUS DISPLAY =====
 show_status:
-    mov rsi, line
-    mov rdx, line_len
-    call print
-
-    ; print score
     mov rsi, score_txt
     mov rdx, score_len
     call print
-
     mov al, [score]
     add al, '0'
     mov [input], al
     mov rsi, input
     mov rdx, 1
     call print
-
-    ; print lives
     mov rsi, lives_txt
     mov rdx, lives_len
     call print
-
     mov al, [lives]
     add al, '0'
     mov [input], al
     mov rsi, input
     mov rdx, 1
     call print
-
-    mov rsi, line
-    mov rdx, line_len
-    call print
     ret
 
-; ===== ASK =====
-ask:
-    call print
-    call input_read
-    ret
-
-; ===== ENDINGS =====
 win_game:
     mov rsi, win
     mov rdx, win_len
@@ -175,7 +150,7 @@ exit:
     xor rdi, rdi
     syscall
 
-; ===== BASIC IO =====
+; ===== BASIC I/O =====
 print:
     mov rax, 1
     mov rdi, 1
