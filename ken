@@ -31,6 +31,8 @@ lives_len equ $ - lives_txt
 title db 10,"==== 5S QUIZ GAME ====",10
 title_len equ $ - title
 
+newline_char db 10
+
 section .bss
 input resb 2
 score resb 1
@@ -52,13 +54,19 @@ game_loop:
     je game_over
 
     call show_status
+    call newline
 
     call ask_q1
     call check_life
+    call newline
+
     call ask_q2
     call check_life
+    call newline
+
     call ask_q3
     call check_life
+    call newline
 
     jmp win_game
 
@@ -123,6 +131,7 @@ show_status:
     mov rsi, input
     mov rdx, 1
     call print
+
     mov rsi, lives_txt
     mov rdx, lives_len
     call print
@@ -132,6 +141,8 @@ show_status:
     mov rsi, input
     mov rdx, 1
     call print
+
+    call newline
     ret
 
 win_game:
@@ -163,4 +174,11 @@ input_read:
     mov rsi, input
     mov rdx, 2
     syscall
+    ret
+
+; ===== UTILITY =====
+newline:
+    mov rsi, newline_char
+    mov rdx, 1
+    call print
     ret
