@@ -10,16 +10,16 @@ q3 db 10,"Sustain means discipline?",10,"1.Yes 2.No: "
 q3_len equ $ - q3
 
 ; ===== FEEDBACK =====
-correct db "✔ Correct!",10
+correct db "/ Correct!",10
 correct_len equ $ - correct
 
-wrong db "✘ Wrong!",10
+wrong db "X Wrong!",10
 wrong_len equ $ - wrong
 
-win db 10,"🎉 YOU WIN!",10
+win db 10,"!!!YOU WIN!",10
 win_len equ $ - win
 
-lose db 10,"💀 GAME OVER!",10
+lose db 10,"GAME OVER! :<",10
 lose_len equ $ - lose
 
 score_txt db "Score: "
