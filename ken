@@ -1,118 +1,124 @@
 section .data
-    menu db "5S System Menu:",10
-         db "1. Sort",10
-         db "2. Set in Order",10
-         db "3. Shine",10
-         db "4. Standardize",10
-         db "5. Sustain",10
-         db "Choose (1-5): "
-    menu_len equ $ - menu
+    ; Questions
+    q1 db "Q1: Which step removes unnecessary items?",10,"1.Sort 2.Set 3.Shine 4.Standardize 5.Sustain: "
+    q1_len equ $ - q1
 
-    msg1 db 10,"Sort: Remove unnecessary items",10
-    len1 equ $ - msg1
+    q2 db 10,"Q2: Which step focuses on cleaning?",10,"1.Sort 2.Set 3.Shine 4.Standardize 5.Sustain: "
+    q2_len equ $ - q2
 
-    msg2 db 10,"Set in Order: Arrange needed items properly",10
-    len2 equ $ - msg2
+    q3 db 10,"Q3: Which step maintains discipline?",10,"1.Sort 2.Set 3.Shine 4.Standardize 5.Sustain: "
+    q3_len equ $ - q3
 
-    msg3 db 10,"Shine: Clean regularly",10
-    len3 equ $ - msg3
+    ; Messages
+    correct db 10,"Correct!",10
+    correct_len equ $ - correct
 
-    msg4 db 10,"Standardize: Create consistent rules",10
-    len4 equ $ - msg4
+    wrong db 10,"Wrong!",10
+    wrong_len equ $ - wrong
 
-    msg5 db 10,"Sustain: Maintain discipline",10
-    len5 equ $ - msg5
+    final_msg db 10,"Your Score: "
+    final_len equ $ - final_msg
 
-    invalid db 10,"Invalid choice!",10
-    inv_len equ $ - invalid
+    slash db "/3",10
+    slash_len equ $ - slash
 
 section .bss
-    choice resb 1
+    input resb 2
+    score resb 1
 
 section .text
     global _start
 
 _start:
-    ; display menu
-    push menu_len
-    push menu
+    mov byte [score], 0
+
+    ; ---------- Q1 ----------
+    mov rsi, q1
+    mov rdx, q1_len
+    call print_string
+    call get_input
+
+    cmp byte [input], '1'
+    call check_answer
+
+    ; ---------- Q2 ----------
+    mov rsi, q2
+    mov rdx, q2_len
+    call print_string
+    call get_input
+
+    cmp byte [input], '3'
+    call check_answer
+
+    ; ---------- Q3 ----------
+    mov rsi, q3
+    mov rdx, q3_len
+    call print_string
+    call get_input
+
+    cmp byte [input], '5'
+    call check_answer
+
+    ; ---------- FINAL SCORE ----------
+    mov rsi, final_msg
+    mov rdx, final_len
     call print_string
 
-    ; read input
-    mov eax, 3          ; sys_read
-    mov ebx, 0          ; stdin
-    mov ecx, choice
-    mov edx, 1
-    int 0x80
+    mov al, [score]
+    add al, '0'        ; convert number to ASCII
+    mov [input], al
 
-    ; check input
-    mov al, [choice]
-
-    cmp al, '1'
-    je step1
-    cmp al, '2'
-    je step2
-    cmp al, '3'
-    je step3
-    cmp al, '4'
-    je step4
-    cmp al, '5'
-    je step5
-    jmp wrong
-
-step1:
-    push len1
-    push msg1
-    call print_string
-    jmp exit
-
-step2:
-    push len2
-    push msg2
-    call print_string
-    jmp exit
-
-step3:
-    push len3
-    push msg3
-    call print_string
-    jmp exit
-
-step4:
-    push len4
-    push msg4
-    call print_string
-    jmp exit
-
-step5:
-    push len5
-    push msg5
-    call print_string
-    jmp exit
-
-wrong:
-    push inv_len
-    push invalid
+    mov rsi, input
+    mov rdx, 1
     call print_string
 
-exit:
-    mov eax, 1
-    xor ebx, ebx
-    int 0x80
+    mov rsi, slash
+    mov rdx, slash_len
+    call print_string
+
+    ; exit
+    mov rax, 60
+    xor rdi, rdi
+    syscall
+
+; -----------------------------------
+; FUNCTION: check_answer
+; Uses ZF flag from cmp
+; -----------------------------------
+check_answer:
+    je right
+
+wrong_ans:
+    mov rsi, wrong
+    mov rdx, wrong_len
+    call print_string
+    ret
+
+right:
+    mov rsi, correct
+    mov rdx, correct_len
+    call print_string
+
+    inc byte [score]
+    ret
 
 ; -----------------------------------
 ; FUNCTION: print_string
+; rsi = address, rdx = length
 ; -----------------------------------
 print_string:
-    push ebp
-    mov ebp, esp
+    mov rax, 1
+    mov rdi, 1
+    syscall
+    ret
 
-    mov ecx, [ebp+8]
-    mov edx, [ebp+12]
-
-    mov eax, 4
-    mov ebx, 1
-    int 0x80
-
-    pop ebp
-    ret 8
+; -----------------------------------
+; FUNCTION: get_input
+; -----------------------------------
+get_input:
+    mov rax, 0
+    mov rdi, 0
+    mov rsi, input
+    mov rdx, 2
+    syscall
+    ret
