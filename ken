@@ -1,120 +1,221 @@
 section .data
-    ; Questions
-    q1 db "Q1: Which step removes unnecessary items?",10,"1.Sort 2.Set 3.Shine 4.Standardize 5.Sustain: "
-    q1_len equ $ - q1
+; ===== COLORS =====
+green db 27,"[32m"
+green_len equ $ - green
 
-    q2 db 10,"Q2: Which step focuses on cleaning?",10,"1.Sort 2.Set 3.Shine 4.Standardize 5.Sustain: "
-    q2_len equ $ - q2
+red db 27,"[31m"
+red_len equ $ - red
 
-    q3 db 10,"Q3: Which step maintains discipline?",10,"1.Sort 2.Set 3.Shine 4.Standardize 5.Sustain: "
-    q3_len equ $ - q3
+yellow db 27,"[33m"
+yellow_len equ $ - yellow
 
-    ; Messages
-    correct db 10,"Correct!",10
-    correct_len equ $ - correct
+reset db 27,"[0m"
+reset_len equ $ - reset
 
-    wrong db 10,"Wrong!",10
-    wrong_len equ $ - wrong
+; ===== QUESTIONS =====
+q1 db "Which step removes unnecessary items?",10,"1.Sort 2.Set 3.Shine 4.Standardize 5.Sustain: "
+q1_len equ $ - q1
 
-    final_msg db 10,"Your Score: "
-    final_len equ $ - final_msg
+q2 db 10,"Which step focuses on cleaning?",10,"1.Sort 2.Set 3.Shine 4.Standardize 5.Sustain: "
+q2_len equ $ - q2
 
-    slash db "/3",10
-    slash_len equ $ - slash
+q3 db 10,"Which step maintains discipline?",10,"1.Sort 2.Set 3.Shine 4.Standardize 5.Sustain: "
+q3_len equ $ - q3
+
+; ===== MESSAGES =====
+correct db 10,"Correct!",10
+correct_len equ $ - correct
+
+wrong db 10,"Wrong!",10
+wrong_len equ $ - wrong
+
+final db 10,"Final Score: "
+final_len equ $ - final
+
+again db 10,"Play again? (y/n): "
+again_len equ $ - again
+
+excellent db 10,"Excellent!",10
+exc_len equ $ - excellent
+
+good db 10,"Good job!",10
+good_len equ $ - good
+
+bad db 10,"Try again!",10
+bad_len equ $ - bad
 
 section .bss
-    input resb 2
-    score resb 1
+input resb 2
+score resb 1
+seed  resb 1
 
 section .text
-    global _start
+global _start
 
 _start:
+
+game_loop:
     mov byte [score], 0
 
-    ; ---------- Q1 ----------
-    mov rsi, q1
-    mov rdx, q1_len
-    call print_string
-    call get_input
+    ; simple pseudo-random seed
+    rdtsc
+    mov [seed], al
 
-    cmp byte [input], '1'
-    call check_answer
+    ; -------- RANDOM ORDER --------
+    mov al, [seed]
+    and al, 1
+    cmp al, 0
+    je order1
 
-    ; ---------- Q2 ----------
-    mov rsi, q2
-    mov rdx, q2_len
-    call print_string
-    call get_input
+; ORDER 2
+order2:
+    call ask_q2
+    call ask_q1
+    call ask_q3
+    jmp show_score
 
-    cmp byte [input], '3'
-    call check_answer
+; ORDER 1
+order1:
+    call ask_q1
+    call ask_q2
+    call ask_q3
 
-    ; ---------- Q3 ----------
-    mov rsi, q3
-    mov rdx, q3_len
-    call print_string
-    call get_input
-
-    cmp byte [input], '5'
-    call check_answer
-
-    ; ---------- FINAL SCORE ----------
-    mov rsi, final_msg
+; -------- SHOW SCORE --------
+show_score:
+    mov rsi, final
     mov rdx, final_len
     call print_string
 
     mov al, [score]
-    add al, '0'        ; convert number to ASCII
+    add al, '0'
     mov [input], al
 
     mov rsi, input
     mov rdx, 1
     call print_string
 
-    mov rsi, slash
-    mov rdx, slash_len
+    ; rating
+    cmp byte [score], 3
+    je rate_exc
+    cmp byte [score], 2
+    je rate_good
+    jmp rate_bad
+
+rate_exc:
+    mov rsi, green
+    mov rdx, green_len
     call print_string
+
+    mov rsi, excellent
+    mov rdx, exc_len
+    call print_string
+    jmp reset_color
+
+rate_good:
+    mov rsi, yellow
+    mov rdx, yellow_len
+    call print_string
+
+    mov rsi, good
+    mov rdx, good_len
+    call print_string
+    jmp reset_color
+
+rate_bad:
+    mov rsi, red
+    mov rdx, red_len
+    call print_string
+
+    mov rsi, bad
+    mov rdx, bad_len
+    call print_string
+
+reset_color:
+    mov rsi, reset
+    mov rdx, reset_len
+    call print_string
+
+    ; play again
+    mov rsi, again
+    mov rdx, again_len
+    call print_string
+
+    call get_input
+    cmp byte [input], 'y'
+    je game_loop
 
     ; exit
     mov rax, 60
     xor rdi, rdi
     syscall
 
-; -----------------------------------
-; FUNCTION: check_answer
-; Uses ZF flag from cmp
-; -----------------------------------
-check_answer:
-    je right
+; ===== QUESTION FUNCTIONS =====
+ask_q1:
+    mov rsi, q1
+    mov rdx, q1_len
+    call ask
+    cmp byte [input], '1'
+    call check
+    ret
+
+ask_q2:
+    mov rsi, q2
+    mov rdx, q2_len
+    call ask
+    cmp byte [input], '3'
+    call check
+    ret
+
+ask_q3:
+    mov rsi, q3
+    mov rdx, q3_len
+    call ask
+    cmp byte [input], '5'
+    call check
+    ret
+
+; ===== CORE FUNCTIONS =====
+ask:
+    call print_string
+    call get_input
+    ret
+
+check:
+    je correct_ans
 
 wrong_ans:
+    mov rsi, red
+    mov rdx, red_len
+    call print_string
+
     mov rsi, wrong
     mov rdx, wrong_len
     call print_string
-    ret
+    jmp reset_after
 
-right:
+correct_ans:
+    mov rsi, green
+    mov rdx, green_len
+    call print_string
+
     mov rsi, correct
     mov rdx, correct_len
     call print_string
 
     inc byte [score]
+
+reset_after:
+    mov rsi, reset
+    mov rdx, reset_len
+    call print_string
     ret
 
-; -----------------------------------
-; FUNCTION: print_string
-; rsi = address, rdx = length
-; -----------------------------------
 print_string:
     mov rax, 1
     mov rdi, 1
     syscall
     ret
 
-; -----------------------------------
-; FUNCTION: get_input
-; -----------------------------------
 get_input:
     mov rax, 0
     mov rdi, 0
